@@ -1,4 +1,3 @@
-
 name: Build Windows EXE (CHAP1_v19_clean)
 
 on:
@@ -29,28 +28,28 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller pillow
 
-      - name: Convert provided PNG to ICO (PowerShell here-string)
+      - name: Convert provided PNG to ICO
         shell: pwsh
         run: |
-          $code = @"
+          $code = @'
 from PIL import Image
 from pathlib import Path
-p = Path('assets/chap1_provided.png')
+p = Path("assets/chap1_provided.png")
 if p.exists() and p.stat().st_size > 0:
-    img = Image.open(p).convert('RGBA')
+    img = Image.open(p).convert("RGBA")
     sizes = [(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)]
-    img.save('assets/chap1.ico', sizes=sizes)
-    print('ICO created at assets/chap1.ico')
+    img.save("assets/chap1.ico", sizes=sizes)
+    print("ICO created at assets/chap1.ico")
 else:
-    print('No provided PNG, skipping ICO conversion.')
-"@
-          $code | Set-Content -Path convert_ico.py -Encoding UTF8
+    print("No provided PNG, skipping ICO conversion.")
+'@
+          Set-Content -Path convert_ico.py -Value $code -Encoding UTF8
           python convert_ico.py
 
       - name: Build EXE (no UPX)
         shell: cmd
         run: |
-          python -m PyInstaller --noconsole --onefile --name CHAP1_v19_clean --icon assets/chap1.ico ^
+          python -m PyInstaller --noconsole --onefile --name CHAP1_v19_clean --icon assets\chap1.ico ^
             --hidden-import sounddevice ^
             --hidden-import faster_whisper ^
             --hidden-import ctranslate2 ^
