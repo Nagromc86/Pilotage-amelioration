@@ -22,15 +22,14 @@ jobs:
           New-Item -ItemType Directory -Force -Path data | Out-Null
           if (-not (Test-Path data\.gitkeep)) { "" | Out-File -FilePath data\.gitkeep -Encoding ascii }
 
-      - name: Install dependencies
+      - name: Install dependencies (runtime + PyInstaller)
         shell: pwsh
         run: |
-          python -m pip install --upgrade pip wheel
+          python -m pip install --upgrade pip wheel setuptools
           if (Test-Path requirements.txt) {
-            pip install -r requirements.txt
-          } else {
-            pip install pyinstaller pillow
+            python -m pip install -r requirements.txt
           }
+          python -m pip install pyinstaller pillow
 
       - name: Build EXE (no UPX)
         shell: cmd
