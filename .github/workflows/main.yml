@@ -1,4 +1,3 @@
-
 name: Build Windows EXE (CHAP1 2.3.1 + UPX)
 
 on:
@@ -10,6 +9,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: List repo (sanity)
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse | Select-Object FullName
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -33,10 +37,24 @@ jobs:
             if (-not (Test-Path $d)) { New-Item -Type Directory -Path $d | Out-Null }
           }
 
+      - name: Verify entry points (fail early if missing)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'run.py')) { throw 'Missing run.py at repo root' }
+          if (-not (Test-Path 'optimisation_pilotage/app.py')) { throw 'Missing optimisation_pilotage/app.py' }
+          if (-not (Test-Path 'optimisation_pilotage/__init__.py')) { 
+            'from .app import main' | Out-File -FilePath 'optimisation_pilotage/__init__.py' -Encoding utf8 
+          }
+
       - name: Build normal
         shell: pwsh
         run: |
-          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1')
+          $args = @(
+            '--noconsole','--onefile','--name','CHAP1_v2_3_1',
+            '--hidden-import','optimisation_pilotage',
+            '--hidden-import','optimisation_pilotage.app',
+            '--collect-all','optimisation_pilotage'
+          )
           $datas = @('assets;assets','data;data','exports;exports','logs;logs','autosave;autosave')
           foreach ($pair in $datas) {
             $src = $pair.Split(';')[0]
@@ -56,7 +74,12 @@ jobs:
       - name: Build UPX
         shell: pwsh
         run: |
-          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1_upx')
+          $args = @(
+            '--noconsole','--onefile','--name','CHAP1_v2_3_1_upx',
+            '--hidden-import','optimisation_pilotage',
+            '--hidden-import','optimisation_pilotage.app',
+            '--collect-all','optimisation_pilotage'
+          )
           $datas = @('assets;assets','data;data','exports;exports','logs;logs','autosave;autosave')
           foreach ($pair in $datas) {
             $src = $pair.Split(';')[0]
