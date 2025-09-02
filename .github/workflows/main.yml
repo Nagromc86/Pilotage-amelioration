@@ -25,10 +25,23 @@ jobs:
             pip install -r requirements.txt
           }
 
+      - name: Prepare folders (avoid PyInstaller missing-data error)
+        shell: pwsh
+        run: |
+          $dirs = @('assets','data','exports','logs','autosave')
+          foreach ($d in $dirs) {
+            if (-not (Test-Path $d)) { New-Item -Type Directory -Path $d | Out-Null }
+          }
+
       - name: Build normal
         shell: pwsh
         run: |
-          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1','--add-data','assets;assets','--add-data','data;data','--add-data','exports;exports','--add-data','logs;logs','--add-data','autosave;autosave')
+          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1')
+          $datas = @('assets;assets','data;data','exports;exports','logs;logs','autosave;autosave')
+          foreach ($pair in $datas) {
+            $src = $pair.Split(';')[0]
+            if (Test-Path $src) { $args += @('--add-data', $pair) }
+          }
           if (Test-Path 'assets/chap1.ico') { $args += @('--icon','assets/chap1.ico') }
           $args += 'run.py'
           python -m PyInstaller @args
@@ -37,13 +50,18 @@ jobs:
         shell: pwsh
         run: |
           choco install upx -y --no-progress
-          $env:Path += ';C:\\ProgramData\\chocolatey\\bin;C:\\ProgramData\\chocolatey\\lib\\upx\\tools'
+          $env:Path += ';C:\ProgramData\chocolatey\bin;C:\ProgramData\chocolatey\lib\upx\tools'
           upx --version
 
       - name: Build UPX
         shell: pwsh
         run: |
-          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1_upx','--add-data','assets;assets','--add-data','data;data','--add-data','exports;exports','--add-data','logs;logs','--add-data','autosave;autosave')
+          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_1_upx')
+          $datas = @('assets;assets','data;data','exports;exports','logs;logs','autosave;autosave')
+          foreach ($pair in $datas) {
+            $src = $pair.Split(';')[0]
+            if (Test-Path $src) { $args += @('--add-data', $pair) }
+          }
           if (Test-Path 'assets/chap1.ico') { $args += @('--icon','assets/chap1.ico') }
           $args += 'run.py'
           python -m PyInstaller @args
