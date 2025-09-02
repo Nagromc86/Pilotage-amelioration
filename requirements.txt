@@ -1,0 +1,10 @@
+pyqt5>=5.15
+numpy>=1.24
+pandas>=2.0
+openpyxl>=3.1
+soundcard>=0.4.3
+soundfile>=0.12.1
+faster-whisper>=1.0
+ctranslate2>=4.3
+huggingface-hub>=0.23
+psutil>=5.9
