@@ -1,0 +1,53 @@
+name: Build Windows EXE (CHAP1 2.3.2)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Prepare folders
+        shell: pwsh
+        run: |
+          $dirs = @('assets','data','exports','logs','autosave')
+          foreach ($d in $dirs) { if (-not (Test-Path $d)) { New-Item -Type Directory -Path $d | Out-Null } }
+
+      - name: Verify entry points
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'run.py')) { throw 'Missing run.py at repo root' }
+          if (-not (Test-Path 'optimisation_pilotage/app.py')) { throw 'Missing optimisation_pilotage/app.py' }
+          if (-not (Test-Path 'optimisation_pilotage/__init__.py')) { 'from .app import main' | Out-File -FilePath 'optimisation_pilotage/__init__.py' -Encoding utf8 }
+
+      - name: Build normal
+        shell: pwsh
+        run: |
+          $args = @('--noconsole','--onefile','--name','CHAP1_v2_3_2','--hidden-import','optimisation_pilotage','--hidden-import','optimisation_pilotage.app','--collect-all','optimisation_pilotage')
+          $datas = @('assets;assets','data;data','exports;exports','logs;logs','autosave;autosave')
+          foreach ($pair in $datas) { $src = $pair.Split(';')[0]; if (Test-Path $src) { $args += @('--add-data', $pair) } }
+          if (Test-Path 'assets/chap1.ico') { $args += @('--icon','assets/chap1.ico') }
+          $args += 'run.py'
+          python -m PyInstaller @args
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CHAP1_v2_3_2_RELEASE
+          path: |
+            dist/CHAP1_v2_3_2.exe
+          if-no-files-found: error
